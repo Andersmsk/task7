@@ -1,0 +1,41 @@
+--- Топ-5 известных комментариев;
+
+db.statistic.find().sort([(	"scrore", -1)]).limit(5)
+
+
+
+--- Все записи, где длина поля “content” составляет менее 5 символов;
+
+db.statistic.find({$where: "this.content.length < 5"})
+
+
+
+--- Средний рейтинг по каждому дню (результат должен быть в виде timestamp type).
+
+db.statistic.aggregate([
+  {
+    $addFields: {
+      day: {
+        $dateFromString: {
+          dateString: { $dateToString: { format: "%Y-%m-%d", date: "$at" } },
+          format: "%Y-%m-%d"
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$day",
+      averageScore: {
+        $avg: "$score"
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      day: "$_id",
+      averageScore: 1
+    }
+  }
+])
